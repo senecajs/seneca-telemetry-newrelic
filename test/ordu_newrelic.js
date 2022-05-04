@@ -1,4 +1,3 @@
-
 /*
   There's two types of general transactions:
     Web Transactions
@@ -42,6 +41,8 @@ class TelemetryCollector {
 */
 const newrelic = require('newrelic')
 const Seneca = require('seneca')
+const axios = require('axios')
+
 
 function Transaction(specMetadata) {
     let transaction;
@@ -72,11 +73,54 @@ const TelemetryCollector = {
     defaultTime: 5000,
     specList: [],
     extractFromSpec(spec, event) {
+        if(spec.ctx.actdef?.func
+          && spec.ctx.actdef.pattern !== 'name:transport,plugin:define,role:seneca,seq:0,tag:undefined'
+          && spec.ctx.actdef.pattern !== 'name:promisify,plugin:define,role:seneca,seq:1,tag:undefined'
+          ) {
+          const name = spec.ctx.actdef.pattern
+          const group = spec.data.meta.id
+          const funcOriginal = spec.ctx.actdef.func
+          
+          spec.ctx.actdef.func = async function action(...args) {
+            const seneca = this
+            console.log(name)
+            return newrelic.startBackgroundTransaction(name, 'group', async function handler() {
+              const t = newrelic.getTransaction()
+              await newrelic.startSegment('createName', true, function() {
+                console.log('a')
+                return createName() // promise
+              })
+              await newrelic.startSegment('someFetches', true, function() {
+                console.log('b')
+                return someFetches() // promise
+              })
+              console.log('c')
+              const x = funcOriginal.bind(seneca)(...args)
+              t.end()
+              return x
+            })
+          }
+        }
+
+        async function createName() {
+          await sleep(2000)
+          return "Gustavo"
+        }
+
+        async function someFetches() {
+          return {
+            first: await axios.default.get('https://any-api.com/'),
+            second: await axios.default.get('https://ipstack.com/?utm_source=any-api&utm_medium=OwnedSites'),
+            third: await axios.default.get('https://aviationstack.com/?utm_source=any-api&utm_medium=OwnedSites')
+          }
+        }
+
         const metadata = {
           id: spec.data.meta.id,
           tx_id: spec.data.meta.tx,
           mi_id: spec.data.meta.mi,
           msg: JSON.stringify(spec.data.msg),
+          func: spec.ctx.actdef?.func
         }
         if (spec.ctx.actdef) {
           metadata.plugin_name = spec.ctx.actdef.plugin_fullname;
@@ -119,9 +163,12 @@ const TelemetryCollector = {
             });
         }
     },
-    async bootTransaction(specMetadata) {
+    async bootTransaction(specMetadata) {      
         return new Promise((resolve, reject) => {
-            const { pattern, id } = specMetadata;
+            const { pattern, id, func } = specMetadata;
+            if(func) {
+
+            }
             const name = pattern ?? "TEST"; // TODO
             newrelic.startBackgroundTransaction(name, id, () => {
                 const transaction = newrelic.getTransaction();
@@ -132,12 +179,11 @@ const TelemetryCollector = {
     },
     async testTransaction(specMetadata) {
         return new Promise((resolve, reject) => {
-            const { pattern, id } = specMetadata;
+            const { pattern, id, func } = specMetadata;
             const name = pattern ?? "TEST"; // TODO
             newrelic.startBackgroundTransaction(name, id, async () => {
                 const transaction = newrelic.getTransaction();
                 await sleep(1000);
-                console.log('aqui!');
                 // newrelic.recordMetric('vitor_metric', specMetadata);
                 transaction.end();
                 resolve(true);
@@ -145,6 +191,7 @@ const TelemetryCollector = {
         })
     },
     async testCloseAll() {
+      return 
         this.specList.forEach(async (s) => {
             await this.testTransaction(s);
         })
@@ -163,23 +210,24 @@ let s01 = Seneca()
     .use('promisify')
 
 // Basic message 
-    .message('m:1', async function m1(msg) {
-      await sleep(100)
+    .message('m:1', async function m1(msg, meta) {
       return {k: 3 * msg.k}
     })
 
 // Message with prior
-    .message('m:2', async function m2(msg) {
+    .message('m:2', async function m2(msg, meta) {
       await sleep(100)
       return {k: 3 * msg.k}
     })
     .message('m:2', async function m1Hook(msg) {
       await sleep(100);
       msg.k = msg.k + 1;
+      return {k: 3 * msg.k}
       return this.prior(msg);
     })
 
 s01.order.inward.add(spec=>{
+  //console.log('speca', spec)
   const specMetadata = TelemetryCollector.extractFromSpec(spec, 'inward');
   TelemetryCollector.updateSpecList(specMetadata);
 })
@@ -258,9 +306,7 @@ Simple example:
 */
 
 
-s01.act('m:1,k:2', (msg) => {
-  //console.log(JSON.stringify(specList))
-}) // { k: 6 }
+
 
 setTimeout(async () => {
     // console.log(TelemetryCollector.specList);
@@ -276,5 +322,5 @@ setTimeout(async () => {
 
 
 
-// s01.act('m:2,k:8', Seneca.util.print) // { k: 27 }
+ s01.act('m:2,k:8', Seneca.util.print) // { k: 27 }
 
