@@ -54,8 +54,6 @@
     "seneca-promisify": ">=2"
   },
   "dependencies": {
-    "axios": "^0.27.2",
-    "newrelic": "^8.10.0",
-    "trello": "^0.11.0"
+    "newrelic": "^8.10.0"
   }
 }
