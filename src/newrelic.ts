@@ -64,12 +64,12 @@ function endSegment(spec: Spec) {
 function preload(this: any, opts: any) {
   const seneca = this;
   const { options }: { options: NewRelicOptions } = opts;
-  const isPluginEnable = options && options.enabled
+  const isPluginEnabled = options && options.enabled
 
-  const segmentIsEnabled = isPluginEnable && options.segment && options.segment.enabled;
-  const tracingIsEnabled = isPluginEnable && options.tracing && options.tracing.enabled;
-  const metricsIsEnabled = isPluginEnable && options.metrics && options.metrics.enabled;
-  const eventsIsEnabled = isPluginEnable && options.events && options.events.enabled;
+  const segmentIsEnabled = isPluginEnabled && options.segment && options.segment.enabled;
+  const tracingIsEnabled = isPluginEnabled && options.tracing && options.tracing.enabled;
+  const metricsIsEnabled = isPluginEnabled && options.metrics && options.metrics.enabled;
+  const eventsIsEnabled = isPluginEnabled && options.events && options.events.enabled;
   
   let tracingCollector: Nullable<TracingCollector> = null;
   if (tracingIsEnabled && options.tracing) {
@@ -113,9 +113,9 @@ function preload(this: any, opts: any) {
 }
 
 function newrelic(this: any, options: NewRelicOptions) {
-    const isPluginEnable = options && options.enabled
+    const isPluginEnabled = options && options.enabled
 
-    if(!isPluginEnable) {
+    if(!isPluginEnabled) {
       return
     }
 
