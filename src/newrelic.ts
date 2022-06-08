@@ -64,10 +64,16 @@ function endSegment(spec: Spec) {
 function preload(this: any, opts: any) {
   const seneca = this;
   const { options }: { options: NewRelicOptions } = opts;
-  const segmentIsEnabled = options && options.segment && options.segment.enabled;
-  const tracingIsEnabled = options && options.tracing && options.tracing.enabled;
-  const metricsIsEnabled = options && options.metrics && options.metrics.enabled;
-  const eventsIsEnabled = options && options.events && options.events.enabled;
+  const isPluginEnabled = options && options.enabled
+
+  if(!isPluginEnabled) {
+    return
+  }
+
+  const segmentIsEnabled = options.segment && options.segment.enabled;
+  const tracingIsEnabled = options.tracing && options.tracing.enabled;
+  const metricsIsEnabled = options.metrics && options.metrics.enabled;
+  const eventsIsEnabled = options.events && options.events.enabled;
   
   let tracingCollector: Nullable<TracingCollector> = null;
   if (tracingIsEnabled && options.tracing) {
@@ -111,6 +117,12 @@ function preload(this: any, opts: any) {
 }
 
 function newrelic(this: any, options: NewRelicOptions) {
+    const isPluginEnabled = options && options.enabled
+
+    if(!isPluginEnabled) {
+      return
+    }
+
     const seneca: any = this
 
     seneca.message('plugin:newrelic,get:info', get_info)
@@ -178,6 +190,7 @@ function newrelic(this: any, options: NewRelicOptions) {
 
 // Default options.
 const defaults: NewRelicOptions = {
+  enabled: false,
   tracing: {
     enabled: false,
     accountApiKey: '',
