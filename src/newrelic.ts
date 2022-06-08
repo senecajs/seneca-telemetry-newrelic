@@ -66,10 +66,14 @@ function preload(this: any, opts: any) {
   const { options }: { options: NewRelicOptions } = opts;
   const isPluginEnabled = options && options.enabled
 
-  const segmentIsEnabled = isPluginEnabled && options.segment && options.segment.enabled;
-  const tracingIsEnabled = isPluginEnabled && options.tracing && options.tracing.enabled;
-  const metricsIsEnabled = isPluginEnabled && options.metrics && options.metrics.enabled;
-  const eventsIsEnabled = isPluginEnabled && options.events && options.events.enabled;
+  if(!isPluginEnabled) {
+    return
+  }
+
+  const segmentIsEnabled = options.segment && options.segment.enabled;
+  const tracingIsEnabled = options.tracing && options.tracing.enabled;
+  const metricsIsEnabled = options.metrics && options.metrics.enabled;
+  const eventsIsEnabled = options.events && options.events.enabled;
   
   let tracingCollector: Nullable<TracingCollector> = null;
   if (tracingIsEnabled && options.tracing) {
