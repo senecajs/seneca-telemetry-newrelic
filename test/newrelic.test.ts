@@ -21,6 +21,17 @@ describe('newrelic', () => {
     await seneca.close()
   })
 
+  test('the plugin is disabled by default', () => {
+    const seneca = Seneca({ legacy: false })
+      .test()
+      .use('promisify')
+      .use(Plugin)
 
+      expect(Plugin.defaults).toEqual(
+      expect.objectContaining({
+        enabled: false
+      })
+    )
+  })
 })
 
