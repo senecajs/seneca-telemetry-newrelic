@@ -1,2 +1,7 @@
-declare function newrelic(this: any, _options: any): void;
+import { NewRelicOptions } from './types';
+declare function newrelic(this: any, options: NewRelicOptions): {
+    exports: {
+        native: () => {};
+    };
+} | undefined;
 export default newrelic;
