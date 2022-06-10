@@ -22,22 +22,24 @@ function addSegment(spec: Spec) {
       return
     }
 
-    // ensure each action has it's own endSegment
-    context.newrelic = context.newrelic || {}
-    let endSegmentMap =
-      (context.newrelic.endSegmentMap = context.newrelic.endSegmentMap || {})
+    ctx.actdef.func = function(this: any, msg: any, reply: any, meta: any) {
+      const endSegmentReply = (endSegment: any) => {
+        return (...args: any) => {
+          endSegment()
+          reply(...args)
+        }
+      }
 
-    ctx.actdef.func = function(this: any, ...args: any) {
       const instance = this
+
       NewRelic.startSegment(
         pattern + '~' + origfunc.name,
         true,
-        function handler(endSegmentHandler: any) {
-          endSegmentMap[meta.mi] = (endSegmentMap[meta.mi] || {})
-          endSegmentMap[meta.mi].endSegmentHandler = endSegmentHandler
-          return origfunc.call(instance, ...args)
+        function handler(endSegment) {
+          const reply = endSegmentReply(endSegment)
+          return origfunc.call(instance, msg, reply, meta)
         },
-        function endSegmentHandler() { }
+        function endSegment() {}
       )
 
       ctx.actdef.func.$$newrelic_wrapped$$ = true;
@@ -45,19 +47,6 @@ function addSegment(spec: Spec) {
 
     Object.defineProperty(
       ctx.actdef.func, 'name', { value: 'newrelic_' + origfunc.name })
-  }
-}
-
-function endSegment(spec: Spec) {
-  const meta = spec.data.meta
-  const context = spec.ctx.seneca.context
-  const endSegmentMap = context.newrelic?.endSegmentMap
-  if (endSegmentMap && endSegmentMap[meta.mi]) {
-    const endSegmentHandler = endSegmentMap[meta.mi].endSegmentHandler
-    if (endSegmentHandler) {
-      delete endSegmentMap[meta.mi]
-      endSegmentHandler()
-    }
   }
 }
 
@@ -87,9 +76,6 @@ function preload(this: any, opts: any) {
   })
 
   seneca.order.outward.add((spec: Spec) => {
-    if (segmentIsEnabled) {
-      endSegment(spec);
-    }
     if (tracingCollector) {
       tracingCollector.dispatch(spec, 'outward');
     }
