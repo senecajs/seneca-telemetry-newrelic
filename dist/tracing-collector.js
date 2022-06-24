@@ -90,7 +90,8 @@ class TracingCollector {
             spanBatch.addSpan(span);
             this.spanClient.send(spanBatch, (error, res, body) => {
                 if (error) {
-                    this.seneca.log.error(error);
+                    reject(error);
+                    return;
                 }
                 resolve(res.statusCode);
             });
