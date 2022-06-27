@@ -90,8 +90,13 @@ class TracingCollector {
             spanBatch.addSpan(span);
             this.spanClient.send(spanBatch, (error, res, body) => {
                 if (error) {
+                    console.error(`QWERTY: ERR: ${error.message || error.stack}`); // dbg
+                    console.error(); // dbg
                     reject(error);
                     return;
+                }
+                if (null == res) { // dbg
+                    console.error('QWERTY: WTF: response should not be null'); // dbg
                 }
                 resolve(res.statusCode);
             });
