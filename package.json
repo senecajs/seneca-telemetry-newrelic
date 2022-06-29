@@ -44,7 +44,6 @@
     "esbuild-jest": "^0.5.0",
     "express": "^4.18.1",
     "jest": "^27.4.4",
-    "newrelic": "^8.10.0",
     "seneca": ">=3",
     "seneca-entity": "^16.0.3",
     "seneca-msg-test": "^3.2.0",
@@ -53,7 +52,9 @@
   },
   "peerDependencies": {
     "seneca": ">=3",
-    "seneca-promisify": ">=2"
+    "seneca-promisify": ">=2",
+    "@newrelic/telemetry-sdk": ">=0.6",
+    "newrelic": ">=8"
   },
   "dependencies": {
     "@newrelic/telemetry-sdk": "0.6.0",
