@@ -60,7 +60,7 @@ class TracingCollector {
                     this._clearQueue();
                 }
                 catch (error) {
-                    this.seneca.log.error(error);
+                    this.seneca.log.error(error.message || error.stack);
                 }
             }
         }
@@ -88,12 +88,20 @@ class TracingCollector {
                 fullMessage: spec.fullMessage,
             });
             spanBatch.addSpan(span);
-            this.spanClient.send(spanBatch, (error, res, body) => {
+            this.spanClient.send(spanBatch, (error, res, _body) => {
                 if (error) {
                     reject(error);
                     return;
                 }
+                if (!res) {
+                    const error = new Error('There was no error but response has, nonetheless, come back as null');
+                    reject(error);
+                    return;
+                }
+                // TODO: QUESTION: Consider passing the response and body objects via the `resolve` call?
+                //
                 resolve(res.statusCode);
+                return;
             });
         });
     }

@@ -14,6 +14,7 @@ export class TracingCollector {
     this.spanClient = new SpanClient({
       apiKey,
     });
+
     this.seneca = seneca;
   }
 
@@ -63,8 +64,8 @@ export class TracingCollector {
           await this.sendTracing(spec);
           spec.dispatched = true;
           this._clearQueue();
-        } catch (error) {
-          this.seneca.log.error(error);
+        } catch (error: any) {
+          this.seneca.log.error(error.message || error.stack);
         }
       }
     } else {
@@ -87,6 +88,7 @@ export class TracingCollector {
   sendTracing(spec: TelemetrySpecMetadata): Promise<string|void|boolean> {
     return new Promise((resolve, reject) => {
       const spanBatch = new SpanBatch();
+
       const span = new Span(
         spec.mi_id,
         spec.tx_id,
@@ -101,14 +103,25 @@ export class TracingCollector {
           fullMessage: spec.fullMessage!,
         }
       );
+
       spanBatch.addSpan(span);
-      this.spanClient.send(spanBatch, (error: any, res: any, body: any) => {
+
+      this.spanClient.send(spanBatch, (error: any, res: any, _body: any) => {
         if (error) {
           reject(error);
           return;
         }
 
+        if (!res) {
+          const error = new Error('There was no error but response has, nonetheless, come back as null');
+          reject(error);
+          return;
+        }
+
+        // TODO: QUESTION: Consider passing the response and body objects via the `resolve` call?
+        //
         resolve(res.statusCode);
+        return;
       })
     })
   }
