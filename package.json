@@ -16,7 +16,7 @@
     "url": "git://github.com/senecajs/seneca-telemetry-newrelic.git"
   },
   "scripts": {
-    "test": "NEW_RELIC_HOME=./test jest --coverage",
+    "test": "NEW_RELIC_HOME=./test jest",
     "test-some": "NEW_RELIC_HOME=./test jest -t",
     "test-watch": "NEW_RELIC_HOME=./test jest --coverage --watchAll",
     "watch": "tsc -w -d",
