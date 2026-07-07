@@ -1,4 +1,4 @@
-![Seneca telemetry-newrelic](http://senecajs.org/files/assets/seneca-logo.png)
+![Seneca](http://senecajs.org/files/assets/seneca-logo.png)
 > A [Seneca.js](http://senecajs.org) plugin
 
 # @seneca/telemetry-newrelic
